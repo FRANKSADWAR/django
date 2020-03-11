@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+{% load static %}
+{% load leaflet_tags %}
+<html lang="en" charset="utf-8">
+   <head>
+     <meta charset="utf-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+     <link rel="stylesheet" href="{% static 'cssfiles/themapping.css' %}" type="text/css">
+     <title>3D Mapping</title>
+     <style>
+       #main_content {
+         width:100%;
+         height:800%;
+        }
+       .containsthreed {
+        width:100%;
+        height :800px; 
+        }
+     </style>
+  </head>
+  <body>
+    <div id="topbar">
+      <div class="logo"><h3 id="branding">PLC<span class="uniques">Routes</span></h3></div>
+      <div class="navigation">
+        <a href="{% url 'home' %}" class="one_line">Home</a>
+        <a href="#" onclick="openSideBar()" class="one_line" id="sidepanelmenu">Route Information</a>
+        <a href="{% url 'stores' %}" class="one_line">Stores</a>
+        <a href="{% url '3DMaps' %}" class="one_line current">3D Mapping</a>
+        <a href="{% url 'stories' %}" class="one_line">Story Maps</a>
+    </div>
+    </div>
+    <div id="main_content" class="containsthreed">
+    <iframe title="illustrate" width="100%" height="800px" src="https://cesium.com/ion/stories/viewer/?id=2dae0599-bce8-4bcc-b8e0-e525ec91aed3"     frameborder="0" allow="fullscreen" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+    </div>
+  </body>
+</html>

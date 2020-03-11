@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+{% load leaflet_tags %}
+<head>
+    {% leaflet_js %}
+    {% leaflet_css %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{% static 'cssfiles/homeindex.css' %}" type="text/css">
+    <link rel="stylesheet"  href="{% static 'routing/leaflet-routing-machine.css' %}"  type="text/css">
+    <script src="{% static 'leafletplugins/leaflet.ajax.js' %}" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js" type="text/javascript"></script>
+    <script src="{% static 'leafletplugins/leaflet.groupedlayercontrol.js' %}" type="text/javascript"></script> 
+    <link rel="stylesheet"  href="{% static 'controlscss/leaflet.groupedlayercontrol.css' %}"  type="text/css">
+    <script src="{% static 'routing/leaflet-routing-machine.js' %}" type="text/javascript"></script> 
+    
+
+    
+    
+    <style>
+      .leaflet-container{
+        width:100%;
+        height:100%;
+      }
+    </style>
+    <title>PLCDashboard</title>
+    
+</head>
+<body>
+   <!-- <script src="{% static 'jsfiles/leaflet/leaflet.js' %}" type="text/javascript"></script>  -->  
+   <div id="topbar">
+     <div class="logo"><h3 id="branding">PLC<span class="uniques">Routes</span></h3></div>
+     <div class="navigation">
+       <a href="{% url 'home' %}" class="one_line current">Home</a>
+       <a href="#" onclick="openSideBar)" class="one_line" id="sidepanelmenu">Route Information</a>
+       <a href="{% url  'stores' %}" class="one_line">Stores</a>
+       <a href="{% url '3DMaps' %}" class="one_line">3D Mapping</a>
+       <a href="{% url 'stories' %}" class="one_line">Story Maps</a>
+   </div>
+   </div>
+   <div id="bodycontainer">
+     <div class="sidenavigator">
+          <ul>
+            <li  class="tablinks" onclick="openContent(event,'Home')">
+               <img src="{% static 'images/homedash.png' %}" alt="home"></li>
+            <li class="tablinks" onclick="openContent(event,'Routes')">
+               <img src="{% static 'images/themaps.png' %}" alt="maps"></li>
+            <li class="tablinks" onclick="openContent(event,'addData')">
+               <img src="{% static 'images/add_data.png' %}" alt="add data"></li>
+            <li class="tablinks" onclick="openContent(event,'database')">
+                <img src="{% static 'images/database.png'%}" alt="Database"></li>
+            <li class="tablinks" onclick="openContent(event,'analytics')">
+                <img src="{% static 'images/analytics.png' %}" alt="Analytics"></li>
+            <li class="tablinks" onclick="openContent(event,'notifications')">
+                <img src="{% static 'images/notification.png' %}" alt="notifications"></li>
+            <li class="tablinks" onclick="openContent(event,'dataBackup')">
+                <img src="{% static 'images/backup.png' %}" alt="backup data"></li>
+          </ul>
+        <!--  <p>@PLC<span>Routes</span></p>  -->
+     </div>
+     <div class="maincontents">
+          <div id="Home" class="tabcontent">
+            <h4>Services</h4>
+            <div class="webservices">
+            </div>
+          </div>
+          <div id="Routes" class="tabcontent">
+            <!--MAP FILE RESIDES HERE-->
+           <script type="text/javascript">
+             function map_layers(map,options){
+                var osm=L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+                    attribution:'&copy;<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                   });
+                var OpenTopoMap=L.tileLayer('http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
+                     attribution:'Map data: &copy; <a href="http://www.opentopomap.org">OpenTopoMap</a>'
+                   });
+
+                //MAP stores url to map
+                var datasets = new L.GeoJSON.AJAX("{% url 'crownstores' %}",{
+                     pointToLayer:function(feature,latlng){
+                       return L.marker(latlng,{
+                         icon:L.icon({
+                           iconUrl:"static/images/icon.png",
+                           iconSize:[25,30],
+                           iconAnchor:[12,30],
+                           popupAnchor:[0,-25]
+                         }),
+                         title:feature.properties.store.toString(),
+                         riseOnHover:true
+                        });
+
+                      },
+                      onEachFeature:function(feature,layer){
+                         layer.bindPopup(feature.properties.store.toString()+" "+feature.properties.address.toString());
+                      }
+                   });
+                  //Map geo-fence to map
+                  var virtualBoundary=new L.GeoJSON.AJAX("{% url 'virtual_fence' %}",{
+                       style:function (feature){
+                         return {color:"green",weight:3,fillOpacity:0};
+                       },
+                  
+                   });
+                  var roadsDatasets = new L.GeoJSON.AJAX("{% url 'roads'%}",{
+                     style:function (feature){
+                         return { color: "red",weight:2,fillOpacity:0.9};
+                       }
+                   });
+
+                //ADDING all datasets to map
+                roadsDatasets.addTo(map);
+                datasets.addTo(map); 
+                virtualBoundary.addTo(map);   
+
+                var baseLayers = {
+                   "OSM":osm,
+                   "OpenTopoMap":OpenTopoMap,
+                   }
+                var groupedOverlays = {
+                      "Features":{
+                        "Distribution Centers":datasets,
+                        "Geo-Fence":virtualBoundary,
+                        "Roads":roadsDatasets,
+                      }
+
+                      
+                   }; 
+                 L.control.groupedLayers(baseLayers,groupedOverlays).addTo(map);
+                 L.Routing.control({
+                    waypoints: [
+                      L.latLng(-1.313261,36.852721),
+                      L.latLng(-1.3213261,37.052721)
+                      
+  ]
+}).addTo(map);
+              }
+           </script>
+           {% leaflet_map "maparea" callback="window.map_layers" %}
+          </div>
+          <div id="addData"   class="tabcontent">
+             <h4>Add Data on the vehicles,new stores</h4>
+          </div>
+          <div id="database"  class="tabcontent">
+             <h4>Check all available datasets,delete,update</h4>
+          </div>
+          <div id="analytics" class="tabcontent">
+            <h4>Discover hotspots,clusters and other econometrics about your market</h4>
+          </div>
+          <div id="notifications"  class="tabcontent">
+             <h4>Delivery messages, talk to customers,connect to branches</h4>
+          </div>
+          <div  id="dataBackup" class="tabcontent">
+           <h4>Back up your data on cloud storage</h4>
+          </div>
+     </div>
+
+     <div id="sideslide" class="sidepanel">
+        <a href="#" id="closebutton"  onclick="closeSideBar()">&times;</a>
+        <ul id="sidedmenu">
+          <li class="menus">Expected
+              <ul class="notes">
+                <li class="green">Arrived</li>
+                <li class="yellow">Delayed</li>
+                <li class="red">Cancelled</li>
+              </ul>
+          </li>
+        </ul>
+     </div>
+   </div>
+   <div id="bottompage">
+   </div>
+   
+   <!--   <script src="{% static 'jsfiles/mapone.js' %}" type="text/javascript"></script>  -->
+   <script src="{% static 'jsfiles/mainjscript.js' %}" type="text/javascript"></script>
+</body>
+</html>
